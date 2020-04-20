@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.bootcss.com/vConsole/3.3.4/vconsole.min.js"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.5.0/jquery.js"></script>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        ul li {
+            list-style: none;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        html {
+            font-size: 12px;
+        }
+
+        .container {
+            position: relative;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 960px;
+        }
+
+        .main-header {
+            position: relative;
+            height: 5rem;
+        }
+
+        header {
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            transition: all .2s;
+            /* transform: translate3d(0, -100%, 0); */
+            box-shadow: 0 0 5px #888;
+            background: #fff;
+            border-bottom: 1px solid #f1f1f1;
+            color: #909090;
+            height: 5rem;
+            z-index: 250;
+        }
+
+        header.top {
+            border-bottom: none;
+            box-shadow: none;
+            transform: translate3d(0, -100%, 0);
+        }
+
+        header p {
+            text-align: center;
+            line-height: 5rem;
+            font-size: 2rem;
+        }
+
+        .main-content {
+            /* height: 500px; */
+            width: 100%;
+            background: blue;
+        }
+
+        .min-nav {
+            background-color: #fff;
+            position: fixed;
+            left: 0;
+            top: 5rem;
+            width: 100%;
+            height: 3.833rem;
+            line-height: 3.833rem;
+            z-index: 100;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .05);
+            transition: all .2s;
+            transform: translateZ(0);
+        }
+        .min-nav p{
+            font-size: 1rem;
+            text-align: center;
+        }
+        .min-nav.top {
+            transform: translate3d(0, -5rem, 0);
+        }
+
+        .main-content ul {
+            background: #fff;
+            width: 100%;
+        }
+
+        .main-content ul li {
+            border-bottom: 1px solid rgba(178, 186, 194, .15);
+            padding: 2rem;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .empty,
+        .loading {
+            height: 4rem;
+            position: fixed;
+            width: 50%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 20;
+            line-height: 4rem;
+            text-align: center;
+            border-radius: .3rem;
+            display: none;
+            background: rgba(178, 186, 194, .8);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="main-header">
+            <header>
+                <p>this is header</p>
+            </header>
+        </div>
+
+        <div class="main-content">
+            <div class="min-nav">
+                <p>我是第二个标题</p>
+            </div>
+            <ul>
+                <li>1</li>
+                <li>2</li>
+                <li>3</li>
+                <li>4</li>
+                <li>5</li>
+                <li>6</li>
+                <li>7</li>
+                <li>8</li>
+                <li>9</li>
+                <li>10</li>
+                <li>11</li>
+                <li>12</li>
+                <li>13</li>
+                <li>14</li>
+                <li>15</li>
+            </ul>
+        </div>
+
+        <div class="empty">
+            无更多数据
+        </div>
+        <div class="loading">
+            请稍后...
+        </div>
+    </div>
+    <script>
+        (() => {
+            new VConsole();
+            let num = 0;
+            $(document).ready(function () {
+                // 添加滚动事件
+                $(window).scroll(function (e) {
+                    //触底操作
+                    if ($(document).height() - window.innerHeight - $(this).scrollTop() == 0) {
+                        console.log('触底了~')
+                        if (num <= 20 - 2) {
+                            //添加信息
+                            let ul_length = $('.main-content ul li').length + 1;
+                            $('.loading').fadeIn(300);
+                            $('.loading').fadeOut(200);
+                            //外部循环添加
+                            for (let i = ul_length; i < ul_length + 5; i++) {
+                                $('.main-content ul').append(`<li>${i}</li>`)
+                            }
+                            num++;
+                            console.log('已经触发了' + num + '次刷新', 'page:' + (num + 1));
+                        } else {
+                            $('.empty').fadeIn(300);
+                            $('.empty').fadeOut(200);
+                            // this.scrollTo(0,$(document).height());
+                        }
+                    }
+                    //触顶操作
+                    if ($(this).scrollTop() < 10) {
+                        console.log('触顶了~')
+                    }
+                    if ($(this).scrollTop() > 48) {
+                        $('header').addClass('top');
+                        $('.min-nav').addClass('top');
+                    } else {
+                        $('header').removeClass('top');
+                        $('.min-nav').removeClass('top');
+                    }
+                }).trigger("scroll")
+            })
+            // window.onscroll = function (e) {
+            //     let scrollHeight = document.documentElement.scrollHeight; //总的滚动条的高度
+            //     let scrollTop = document.documentElement.scrollTop; //滚动条距离头部的位置
+            //     let clientHeight = document.documentElement.clientHeight; //视口的高度//window.innerHeight
+            //     console.log(scrollHeight, scrollTop, clientHeight);
+            //     if (scrollHeight - scrollTop - clientHeight <=10) {
+            //         console.log('触底了~')
+            //     }
+            //     if (scrollTop == 0) {
+            //         console.log('触头了~')
+            //     }
+            // }
+        })()
+    </script>
+
+</body>
+
+</html>

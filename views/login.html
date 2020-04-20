@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jsonwebtoken</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- <script src="https://cdn.bootcss.com/jquery/3.5.0/jquery.js"></script> -->
+    <link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <style>
+        .box {
+            /* display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-direction: column; */
+            height: 500px;
+            width: 600px;
+            margin: 0 auto;
+            padding-top: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <form class="form-horizontal" id="login-form" role="form">
+            <div class="form-group">
+                <label for="username" class="col-sm-2 control-label">用户昵称：</label>
+                <div class="col-sm-10">
+                    <input type="text" name="username" class="form-control" id="username" placeholder="请输入名字">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password" class="col-sm-2 control-label">密码：</label>
+                <div class="col-sm-10">
+                    <input class="form-control" name="password" type="password" id="password" placeholder="请输入密码">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <button type="button" class="btn btn-default" id="login">登录按钮</button>
+                </div>
+            </div>
+        </form>
+        <!-- 标准的按钮 -->
+        <!-- 提供额外的视觉效果，标识一组按钮中的原始动作 -->
+        <button type="button" class="btn btn-primary" id="test1">测试1接口</button>
+        <!-- 表示一个成功的或积极的动作 -->
+        <button type="button" class="btn btn-success" id="test2">测试2接口</button>
+        <!-- 信息警告消息的上下文按钮 -->
+        <button type="button" class="btn btn-info" id="test3">测试3接口</button>
+        <!-- 表示应谨慎采取的动作 -->
+        <button type="button" class="btn btn-warning" id="test4">查询列表</button>
+        <!-- 表示一个危险的或潜在的负面动作 -->
+        <button type="button" class="btn btn-danger" onclick="resLogin()">注销登录</button>
+    </div>
+    <script>
+        // 添加请求拦截器
+        axios.interceptors.request.use(function (config) {
+            // 在发送请求之前做些什么
+            //添加测试自定义头部
+            config.headers["Authorization"] = document.cookie || '';
+            // config.headers["loginedtoken"] = document.cookie || '';
+            return config;
+        }, function (error) {
+            // 对请求错误做些什么
+            return Promise.reject(error);
+        });
+
+        //添加响应拦截
+        axios.interceptors.response.use(function (response) {
+            // console.log(response);
+            // 对响应数据做点什么
+            //只要需要的信息
+            // return response;
+            return {
+                status: response.status,
+                data:response.data
+            }
+        }, function (error) {
+            // 对响应错误做点什么
+            return Promise.reject(error);
+        });
+
+        $('#login').click(function () {
+            // console.info($('#login-form').serializeArray())
+            if (!($('#username').val() && $('#password').val())) {
+                return;
+            }
+            axios({
+                method: 'post',
+                url: '/login',
+                data: {
+                    username: $.trim($('#username').val()),
+                    password: $.trim($('#password').val())
+                }
+            }).then(res => {
+                console.log(res);
+                //设置cookie----token
+                if (res.status == 200 && res.data.code == 1) {
+                    document.cookie = `user=${res.data.token}`
+                    alert('登录成功！')
+                } else {
+                    alert('登录失败,请检查账号或者密码！')
+                }
+            })
+        })
+        $('#test1').click(function () {
+            axios({
+                method: 'get',
+                url: '/one',
+            }).then(res => {
+                if (res.data.code == -1) {
+                    alert(res.data.errorMsg)
+                } else {
+                    console.log(res)
+                }
+            })
+        })
+        $('#test2').click(function () {
+            axios({
+                method: 'get',
+                url: '/two',
+            }).then(res => {
+                if (res.data.code == -1) {
+                    alert(res.data.errorMsg)
+                } else {
+                    console.log(res)
+                }
+            })
+        })
+
+        $('#test3').click(function () {
+            axios({
+                method: 'get',
+                url: '/there',
+            }).then(res => {
+                if (res.data.code == -1) {
+                    alert(res.data.errorMsg)
+                } else {
+                    console.log(res)
+                }
+            })
+        })
+
+        $('#test4').click(function () {
+            axios({
+                method: 'get',
+                url: '/show-tables',
+            }).then(res => {
+                if (res.data.code == -1) {
+                    alert(res.data.errorMsg)
+                } else {
+                    console.log(res)
+                }
+            })
+        })
+
+        function resLogin() {
+            console.log('正在注销cookie！');
+            document.cookie = `user=; expires=${new Date(Date.now()-3600*24*1000)}`;
+        }
+    </script>
+</body>
+
+</html>

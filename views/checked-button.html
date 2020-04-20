@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>纯css编写开关按钮（一）</title>
+    <style type="text/css">
+        .chooseBtn {
+            display: none;
+        }
+        /* 大盒子 */
+        .choose-label {
+            box-shadow: #ccc 0px 0px 0px 1px;
+            width: 60px;
+            height: 20px;
+            display: inline-block;
+            border-radius: 20px;
+            position: relative;
+            background-color: #dcdfe6;
+            overflow: hidden;
+        }
+
+        .choose-label:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            border-radius: 20px;
+            background-color: #fff;
+            z-index: 20;
+            -webkit-transition: all 0.5s;
+            transition: all 0.5s;
+        }
+
+        .chooseBtn:checked + label.choose-label:before {
+            left: 40px;
+        }
+
+        .chooseBtn:checked + label.choose-label {
+            background-color:rgb(19, 206, 102);
+        } 
+
+        .item p{
+            color: blue;
+            font-size: 18px;
+        }
+        .item p:not(:last-child)::after{
+            color: gold;
+            display:inline-block;
+            content: '*';
+            width: 20px;
+            height: 20px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+<input type="checkbox" name="sex" id="male" class="chooseBtn" />
+<label for="male" class="choose-label"></label>
+
+
+
+
+
+<div class="item">
+    <p>00001</p>
+    <p>00002</p>
+    <p>00003</p>
+</div>
+
+<script>
+
+
+</script>
+</body>
+</html>

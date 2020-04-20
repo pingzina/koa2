@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试promise并发和测试async功能</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <h1>this is main input</h1>
+    <script>
+        // 添加请求拦截器
+        axios.interceptors.request.use(function (config) {
+            // 在发送请求之前做些什么
+            //添加测试自定义头部
+            config.headers["Authorization"] =document.cookie||'------';
+            return config;
+        }, function (error) {
+            // 对请求错误做些什么
+            return Promise.reject(error);
+        });
+
+        let p1 = axios('/user?id=22')
+        let p2 = axios('/user?id=10')
+        // let p3 =axios('/user?id=15')
+
+        // let p5=fetch('/user?id=22').then(res=>res.json())
+        // let p6 =fetch('/user?id=10').then(res=>res.json())
+        // let p7 =fetch('/user?id=15').then(res=>res.json())
+        // let p5 = fetch('/one')
+        // let p5 = fetch('/user?id=22')
+        // let p6 = fetch('/user?id=10')
+        // let p7 = fetch('/user?id=15')
+        //一个post请求
+        // const p4=axios({
+        //     method:"post",
+        //     url:'./saveUserInfo',
+        //     data:{
+        //         name:"zhangsan",
+        //         id:333
+        //     }
+        // })
+        // p4.then(res=>console.log(res));
+
+        // let prom = Promise.all([p1, p2, p3]);
+        // prom.then((res) => {
+        //     console.log(res);
+        // })
+
+        //并发请求测试---promise
+        // let prom = Promise.all([p5, p6, p7]);
+        // prom.then((res) => {
+        //     console.log(res);
+        // })
+
+        // 并发请求测试---async   函数一般返回一个promise
+        // async function dnFun() {
+        //     let [one,two,three]=await Promise.all([p5, p6, p7]);
+        //     // let result = await p5;
+        //     // return result.json();
+        //     // console.log(await one.json(),await two.json(),three);
+        //     return {one,two,three}
+        // }
+
+        // dnFun().then(res => {
+        //     console.log(res);
+        // })
+
+        //一般来说---async后面的异步操作可能会出错，我们可以捕捉它，或者是不让他继续影响后面的操作
+        //预防返回错误--加try catch
+        // async function f() {
+        //     try {
+        //         await Promise.reject('出错了')
+        //         throw new Error('出错了又！')
+        //     } catch (e) {
+        //         console.log(e)
+        //     }
+        //     return await Promise.resolve('我正确了，哈哈哈');
+        // }
+        // f().then(res => {
+        //     console.log(res);
+        // }).catch(error => {
+        //     console.log(error)
+        // })
+
+        //try catch实现多个接口请求-for循环--请求中可能有失败案例
+        //写三个get请求
+        async function test() {
+            let arr = ['./one', './two', '/three'];
+            let i;
+            let data = null;
+            let code = null;
+            try {
+                for (i = 0; i < arr.length; i++) {
+                    let res = await axios(arr[i])
+                    //操作成功之后了退出循环，如果失败会被catch捕获，进行下一轮循环
+                    // if (await res.data.name == "three") {
+                    //     data = await res.data;
+                    //     code = 1;
+                    //     // console.log(await res.json().name);
+                    //     break
+                    // }
+                }
+            } catch (err) {
+                //捕获到请求中的某一个错误
+                console.log(err)
+                code = -1;
+                // return err
+            }
+            //捕获了中止的index
+            // console.log(i);
+            return {
+                code: code,
+                url: arr[i],
+                array_index: i,
+                data: data
+            }
+        }
+
+        // test().then(res => {
+        //     console.log(res);
+        // }).catch(error => {
+        //     //捕获到了某一个跳出的原因
+        //     console.log(error);
+        // })
+
+
+        //普通函数测试-----
+        function test1() {
+            let arr = ['./one', './two', '/three'];
+            let index;
+            let data = null;
+            let code = null;
+            try {
+                for (index = 0; index < arr.length; index++) {
+                    let res = axios(arr[index])
+                    if (res.data.name == "three") {
+                        data = res.data;
+                        code = 1;
+                        break
+                    }
+                }
+            } catch (e) {
+                code = -1;
+            }
+            console.log(index);
+            return {
+                code: code,
+                url: arr[index],
+                array_index: index,
+                data: data
+            }
+        }
+        // console.log(test1())
+
+        //继发请求测试
+        // async function getUserInfo(){
+        //     let res=await p1;
+        //     if(res.status==200){
+        //         return await p2;
+        //     }
+        //     // await p2;
+        //     // await p3;
+        //     // return [p1,p2,p3]
+        // }
+
+        // getUserInfo().then(res=>{
+        //     console.log(res.data);
+        // })
+
+        //测试按顺序完成异步操作->promise
+        // function logInOrder(urls){
+        //     //循环请求接口
+        //     const textPromise=urls.map(url=>{
+        //         return fetch(url).then(response=>response.json())
+        //     })
+        //     //按顺序输出
+        //     textPromise.reduce((chain,textPro)=>{
+        //         return chain.then(()=>textPro)
+        //         .then(text=>console.log(text))
+        //     },Promise.resolve())
+        // }
+        // logInOrder(['./one', './two', '/three'])
+
+        //继续读取信息promise
+        // function logInOrder(urls){
+        //     let arr=[]
+        //     for (const url of urls) {
+        //         arr.push(fetch(url).then(res=>res.json()))
+        //     }
+        //     // console.log(arr);
+        //     return (arr);
+        // }
+
+        //继发读取信息----async
+        // async function logInOrder(urls) {
+        //     let arr = [];
+        //     try {
+        //         for (const url of urls) {
+        //             const response = await fetch(url);
+        //             arr.push(await response.json())
+        //         }
+        //     } catch (err) {
+        //         //忽略错误继续执行
+        //         console.log(err); 
+        //     }
+        //     return await arr;
+        // }
+        // logInOrder(['/one', '/two', '/three']).then(res => {
+        //     console.log(res);
+        // })
+    </script>
+</body>
+
+</html>

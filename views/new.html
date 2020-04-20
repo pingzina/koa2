@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>news</title>
+    <style>
+        body {
+            background: #f5f7fa;
+        }
+    </style>
+</head>
+
+<body>
+    <h2 class="title">这是一个koa-art-template</h2>
+    <p><%=list.name%></p>
+    <p><%=1+2%></p>
+    <%- list.h%>
+    <% if(list.num < 10){%>
+    <p>num小于于10</p>
+    <%}else if(list.num==20){%>
+    <p>num等于20</p>
+    <%}else{%>
+    <p>num大于10</p>
+    <%}%>
+
+    <% for(var i=0;i<list.data.length;i++) {%>
+    <span>
+        <%= list.data[i] %>
+    </span>
+    <%}%>
+</body>
+</html>
