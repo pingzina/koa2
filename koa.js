@@ -7,10 +7,6 @@ const render = require('koa-art-template'); //模板渲染
 const path = require('path'); //文件路劲路径
 const bodyParser = require('koa-bodyparser'); //post请求解析
 const fs = require('fs'); //文件系统
-const koaJwt = require('koa-jwt');
-
-//引入验证信息
-
 
 //引入查询placehodle中user的方法
 const getUserInfo = require("./static/base/getUserInfo");
@@ -149,4 +145,10 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 //启动并且监听端口
-app.listen(5000);
+app.listen(5000,(err)=>{
+    if(err){
+        console.log(err)
+        return
+    }
+    console.log('服务器已经打开：'+'http://localhost:5000/login.html')
+});

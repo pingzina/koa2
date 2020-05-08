@@ -186,4 +186,11 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 //启动并且监听端口
-app.listen(5000);
+//启动并且监听端口
+app.listen(5000,(err)=>{
+    if(err){
+        console.log(err)
+        return
+    }
+    console.log('服务器已经打开：'+'http://localhost:5000/login.html')
+});
