@@ -25,17 +25,17 @@ const mysql_li = {
     query: (sql, params) => {
         return new Promise((resolve, reject) => {
             pool.getConnection((error, conn) => {
-                if (error) return reject({
+                if (error)  reject({
                     code: -1,
                     errorMsg: error
                 });
                 conn.query(sql, params, (err, rows) => {
                     conn.release();
-                    if (err) return reject({
+                    if (err)  reject({
                         code: -1,
                         errorMsg: err
                     });
-                    return resolve({
+                     resolve({
                         code: 1,
                         errorMsg: '查询成功',
                         data: rows

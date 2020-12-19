@@ -18,50 +18,54 @@ function generateToken(data) {
     let token = jwt.sign({
         data,
         // exp: created + 3600 * 24 //过期时间,
-        exp: created + 60 * 3 //过期时间
+        exp: created + 60*5 //过期时间
     }, cert, {
         algorithm: 'RS256'
     }); //验证方法
+    console.log(token)
     return token;
 }
 
 //登录接口
 router.post('/login', async (ctx, next) => {
-    let data = ctx.request.body;
-    let {
+    const  {
         username,
         password,
-    } = data;
-    // console.log(data);
+    } = ctx.request.body;
     //执行查询语句
-    await mysql_li.query(`SELECT * FROM USER_INFO WHERE username='${username}'`).then(res => {
-        console.log(res);
-        if (res.code == 1 && res.data.length > 0) {
-            // console.log(res.data[0].username)
-            if (username == res.data[0].username && password == res.data[0].password) {
-                let token = generateToken({
-                    uid: res.data[0].uid
-                });
-                return ctx.response.body = {
-                    code: 1,
-                    errorMsg: '登录成功！',
-                    token: token
-                }
-            } else {
-                return ctx.response.body = {
-                    code: -1,
-                    errorMsg: '账号密码错误,请重新输入',
-                    token: ''
-                }
+    const res=await mysql_li.query(`SELECT * FROM USER_INFO WHERE username='${username}'`)
+    console.log(res)
+    if (res.data.length&&res.code == 1) {
+        if (username == res.data[0].username && password == res.data[0].password) {
+            const token = generateToken({
+                uid: res.data[0].id
+            });
+             ctx.response.body = {
+                code: 0,
+                errorMsg: '登录成功！',
+                token: token
+            }
+        } else {
+             ctx.response.body = {
+                code: -1,
+                errorMsg: '账号密码错误,请重新输入',
+                token: ''
             }
         }
-    })
+    }else{
+        ctx.response.body = {
+            code: -1,
+            errorMsg: '还没注册哦，请先注册！',
+        }
+    }
 });
 
 //检验token
 function verifyToken(token) {
+    console.log(token)
+    console.log(111111)
     let cert = fs.readFileSync(path.join(__dirname, './config/rsa_public_key.pem')); //公钥
-    let res = null;
+    let res = jwt.verify(token);
     try {
         let result = jwt.verify(token, cert, {
             algorithms: ['RS256']
@@ -124,13 +128,12 @@ router.get('/show-tables', async (ctx) => {
 
 //写三个测试请求
 router.get('/one', async (ctx, next) => {
-    // console.log(ctx.request.headers['cookie']);
+    console.log(ctx)
     ctx.response.body = {
         name: 'one'
     }
 })
 router.get('/two', async (ctx, next) => {
-    // ctx.response.status=200;
     ctx.response.body = {
         name: 'two'
     }
@@ -144,36 +147,30 @@ router.get('/there', async (ctx, next) => {
 
 //其他接口的检测（拦截除了登录以外的接口）
 app.use(async (ctx, next) => {
-    let {
-        url = ''
-    } = ctx;
-    if (url.indexOf('/login') > -1) { //需要校验登录态
+    console.log(ctx)
+    if (ctx.url==='/login') { //需要校验登录态
         //向下路由
         await next();
     } else {
         let header = ctx.request.header;
-        let {
-            Authorization
-        } = header;
+        const {authorization}=header
         //如果token存在的话
-        if (Authorization) {
-            let result = verifyToken(Authorization.split('=')[1]);
+        if (authorization) {
+            let result = verifyToken(authorization);
             // 检验token信息是否存在或者过期
             if (result && result.uid) {
-                // ctx.state = {
-                //     uid
-                // };
+                console.log(result)
                 await next();
             } else {
                 return ctx.body = {
-                    code: -1,
+                    code: -2,
                     errorMsg: 'token已经过期！'
                 };
             }
         } else {
             return ctx.body = {
                 code: -1,
-                errorMsg: 'token不存在！暂未登录，你没有权限，请先登录！'
+                errorMsg: '请先登录！'
             }
         }
     }
@@ -185,7 +182,6 @@ app.use(router.routes());
 
 app.use(router.allowedMethods());
 
-//启动并且监听端口
 //启动并且监听端口
 app.listen(5000,(err)=>{
     if(err){
