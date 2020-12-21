@@ -1,11 +1,13 @@
 const Koa = require('koa'); //引入koa
 const app = new Koa(); //实例化
-const router = require("koa-router")(); //引入koa的路由
+const router = require("koa-router"); //引入koa的路由
 const static = require("koa-static"); //静态资源模板
 const path = require('path'); //文件路劲路径
 const bodyParser = require('koa-bodyparser'); //post请求解析
 const fs = require('fs'); //文件系统
 const jwt = require('jsonwebtoken'); //令牌
+const router1=new router()
+router1.prefix('/api')
 
 //引入连接数据库的方法
 const mysql_li = require('./tenc-mysql');
@@ -13,7 +15,7 @@ const mysql_li = require('./tenc-mysql');
 
 //生成token的方法
 function generateToken(data) {
-    let created = Math.floor(Date.now() / 1000);
+    let created = Math.floor(Date.now() / 1000); // 时间/s
     let cert = fs.readFileSync(path.join(__dirname, './config/rsa_private_key.pem')); //私钥
     let token = jwt.sign({
         data,
@@ -26,8 +28,39 @@ function generateToken(data) {
     return token;
 }
 
+
+// 验证当前路由是否存在
+function veryifyRouter(router,path){
+    return router.stack.find(item=>item.path===path)
+}
+
+
+//检验token
+function verifyToken(token) {
+    console.log(token)
+    console.log(111111)
+    let cert = fs.readFileSync(path.join(__dirname, './config/rsa_public_key.pem')); //公钥
+    let res = jwt.verify(token);
+    try {
+        let result = jwt.verify(token, cert, {
+            algorithms: ['RS256']
+        }) || {};
+        let {
+            exp = 0
+        } = result, current = Math.floor(Date.now() / 1000);
+        if (current <= exp) {
+            res = result.data || {};
+        }
+    } catch (e) {
+        new Error(e)
+    }
+    return res;
+}
+
+
 //登录接口
-router.post('/login', async (ctx, next) => {
+router1.post('/login', async (ctx, next) => {
+    console.log(ctx.request.body)
     const  {
         username,
         password,
@@ -60,28 +93,6 @@ router.post('/login', async (ctx, next) => {
     }
 });
 
-//检验token
-function verifyToken(token) {
-    console.log(token)
-    console.log(111111)
-    let cert = fs.readFileSync(path.join(__dirname, './config/rsa_public_key.pem')); //公钥
-    let res = jwt.verify(token);
-    try {
-        let result = jwt.verify(token, cert, {
-            algorithms: ['RS256']
-        }) || {};
-        let {
-            exp = 0
-        } = result, current = Math.floor(Date.now() / 1000);
-        if (current <= exp) {
-            res = result.data || {};
-        }
-    } catch (e) {
-        new Error(e)
-    }
-    return res;
-}
-
 
 //静态资源配置(托管)----可配置多个
 app.use(static(path.join(__dirname, '/public')));
@@ -96,7 +107,7 @@ const main = ctx => {
     ctx.body = fs.createReadStream(path.join(__dirname, '/views/index.html'));
 }
 
-router.get('/req', async (ctx) => {
+router1.get('/req', async (ctx) => {
     ctx.body = {
         request: ctx.request,
         query: ctx.request.query,
@@ -108,7 +119,7 @@ router.get('/req', async (ctx) => {
 })
 
 //获取所有的用户信息并且查询
-router.get('/show-tables', async (ctx) => {
+router1.get('/show-tables', async (ctx) => {
     await mysql_li.query(`SELECT * FROM USER_INFO`).then(res => {
         if (res.code == 1 && res.data.length > 0) {
             return ctx.response.body = {
@@ -127,18 +138,18 @@ router.get('/show-tables', async (ctx) => {
 })
 
 //写三个测试请求
-router.get('/one', async (ctx, next) => {
+router1.get('/one', async (ctx, next) => {
     console.log(ctx)
     ctx.response.body = {
         name: 'one'
     }
 })
-router.get('/two', async (ctx, next) => {
+router1.get('/two', async (ctx, next) => {
     ctx.response.body = {
         name: 'two'
     }
 })
-router.get('/there', async (ctx, next) => {
+router1.get('/there', async (ctx, next) => {
     ctx.response.body = {
         name: 'there'
     }
@@ -147,12 +158,18 @@ router.get('/there', async (ctx, next) => {
 
 //其他接口的检测（拦截除了登录以外的接口）
 app.use(async (ctx, next) => {
-    console.log(ctx)
-    if (ctx.url==='/login') { //需要校验登录态
+    const {url,header,method}=ctx.request
+    console.log(url)
+    if(!veryifyRouter(router1,url)){
+        return ctx.body = {
+            code: -1,
+            errorMsg: '请求资源路径不存在！'
+        }
+    }
+    if (url==='/api/login') { //需要校验登录态
         //向下路由
         await next();
     } else {
-        let header = ctx.request.header;
         const {authorization}=header
         //如果token存在的话
         if (authorization) {
@@ -176,11 +193,16 @@ app.use(async (ctx, next) => {
     }
 });
 //设置文件主入口
-router.get('/', main);
-//启动路由
-app.use(router.routes());
+router1.get('/', main);
 
-app.use(router.allowedMethods());
+//启动路由
+app.use(router1.routes(),router1.allowedMethods());
+// console.log(router1.stack)
+
+
+
+
+
 
 //启动并且监听端口
 app.listen(5000,(err)=>{
